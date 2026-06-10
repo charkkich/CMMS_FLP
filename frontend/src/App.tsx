@@ -7,20 +7,36 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Layout from './components/layout/Layout';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
-import MaintenanceRequestPage from './pages/MaintenanceRequestPage';
-import CreateRequestPage from './pages/CreateRequestPage';
-import RequestDetailPage from './pages/RequestDetailPage';
-import WorkOrderPage from './pages/WorkOrderPage';
-import WorkOrderDetailPage from './pages/WorkOrderDetailPage';
-import AssetsPage from './pages/AssetsPage';
-import AssetDetailPage from './pages/AssetDetailPage';
-import PmSchedulePage from './pages/PmSchedulePage';
-import PmCalendarPage from './pages/PmCalendarPage';
-import SparePartsPage from './pages/SparePartsPage';
-import StockTransactionsPage from './pages/StockTransactionsPage';
-import ReportsPage from './pages/ReportsPage';
-import UserManagementPage from './pages/UserManagementPage';
-import LanguageSettingsPage from './pages/LanguageSettingsPage';
+
+// Requests
+import RequestListPage from './pages/requests/RequestListPage';
+import RequestFormPage from './pages/requests/RequestFormPage';
+import RequestDetailPage from './pages/requests/RequestDetailPage';
+
+// Work Orders
+import WorkOrderListPage from './pages/workorders/WorkOrderListPage';
+import WorkOrderDetailPage from './pages/workorders/WorkOrderDetailPage';
+
+// Assets
+import AssetListPage from './pages/assets/AssetListPage';
+import AssetFormPage from './pages/assets/AssetFormPage';
+import AssetDetailPage from './pages/assets/AssetDetailPage';
+
+// PM
+import PMSchedulePage from './pages/pm/PMSchedulePage';
+import PMCalendarPage from './pages/pm/PMCalendarPage';
+
+// Inventory
+import SparePartListPage from './pages/inventory/SparePartListPage';
+import SparePartFormPage from './pages/inventory/SparePartFormPage';
+import StockTransactionPage from './pages/inventory/StockTransactionPage';
+
+// Reports
+import ReportsPage from './pages/reports/ReportsPage';
+
+// Settings
+import UserManagementPage from './pages/settings/UserManagementPage';
+import LanguageSettingsPage from './pages/settings/LanguageSettingsPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -55,6 +71,12 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   return <Layout>{children}</Layout>;
 };
 
+const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user } = useAuth();
+  if (user?.role !== 'admin') return <Navigate to="/" replace />;
+  return <>{children}</>;
+};
+
 const AppRoutes: React.FC = () => {
   const { user, loading } = useAuth();
 
@@ -73,20 +95,48 @@ const AppRoutes: React.FC = () => {
         element={user ? <Navigate to="/" replace /> : <LoginPage />}
       />
 
+      {/* Dashboard */}
       <Route path="/" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
-      <Route path="/requests" element={<ProtectedRoute><MaintenanceRequestPage /></ProtectedRoute>} />
-      <Route path="/requests/new" element={<ProtectedRoute><CreateRequestPage /></ProtectedRoute>} />
+
+      {/* Maintenance Requests */}
+      <Route path="/requests" element={<ProtectedRoute><RequestListPage /></ProtectedRoute>} />
+      <Route path="/requests/new" element={<ProtectedRoute><RequestFormPage /></ProtectedRoute>} />
       <Route path="/requests/:id" element={<ProtectedRoute><RequestDetailPage /></ProtectedRoute>} />
-      <Route path="/work-orders" element={<ProtectedRoute><WorkOrderPage /></ProtectedRoute>} />
+
+      {/* Work Orders */}
+      <Route path="/work-orders" element={<ProtectedRoute><WorkOrderListPage /></ProtectedRoute>} />
       <Route path="/work-orders/:id" element={<ProtectedRoute><WorkOrderDetailPage /></ProtectedRoute>} />
-      <Route path="/assets" element={<ProtectedRoute><AssetsPage /></ProtectedRoute>} />
+
+      {/* Assets */}
+      <Route path="/assets" element={<ProtectedRoute><AssetListPage /></ProtectedRoute>} />
+      <Route path="/assets/new" element={<ProtectedRoute><AssetFormPage /></ProtectedRoute>} />
       <Route path="/assets/:id" element={<ProtectedRoute><AssetDetailPage /></ProtectedRoute>} />
-      <Route path="/pm/schedule" element={<ProtectedRoute><PmSchedulePage /></ProtectedRoute>} />
-      <Route path="/pm/calendar" element={<ProtectedRoute><PmCalendarPage /></ProtectedRoute>} />
-      <Route path="/spare-parts" element={<ProtectedRoute><SparePartsPage /></ProtectedRoute>} />
-      <Route path="/stock-transactions" element={<ProtectedRoute><StockTransactionsPage /></ProtectedRoute>} />
+      <Route path="/assets/:id/edit" element={<ProtectedRoute><AssetFormPage /></ProtectedRoute>} />
+
+      {/* PM */}
+      <Route path="/pm/schedule" element={<ProtectedRoute><PMSchedulePage /></ProtectedRoute>} />
+      <Route path="/pm/calendar" element={<ProtectedRoute><PMCalendarPage /></ProtectedRoute>} />
+
+      {/* Inventory */}
+      <Route path="/spare-parts" element={<ProtectedRoute><SparePartListPage /></ProtectedRoute>} />
+      <Route path="/spare-parts/new" element={<ProtectedRoute><SparePartFormPage /></ProtectedRoute>} />
+      <Route path="/spare-parts/:id/edit" element={<ProtectedRoute><SparePartFormPage /></ProtectedRoute>} />
+      <Route path="/stock-transactions" element={<ProtectedRoute><StockTransactionPage /></ProtectedRoute>} />
+
+      {/* Reports */}
       <Route path="/reports" element={<ProtectedRoute><ReportsPage /></ProtectedRoute>} />
-      <Route path="/settings/users" element={<ProtectedRoute><UserManagementPage /></ProtectedRoute>} />
+
+      {/* Settings */}
+      <Route
+        path="/settings/users"
+        element={
+          <ProtectedRoute>
+            <AdminRoute>
+              <UserManagementPage />
+            </AdminRoute>
+          </ProtectedRoute>
+        }
+      />
       <Route path="/settings/language" element={<ProtectedRoute><LanguageSettingsPage /></ProtectedRoute>} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
