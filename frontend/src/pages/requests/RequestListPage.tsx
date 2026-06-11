@@ -148,10 +148,10 @@ const RequestListPage: React.FC = () => {
               ) : requests.map(req => (
                 <tr key={req.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                   <td className="px-4 py-3 text-sm font-medium text-primary-600 dark:text-primary-400">{req.request_number}</td>
-                  <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">{req.request_date ? format(new Date(req.request_date), 'dd/MM/yyyy') : '-'}</td>
-                  <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{req.requester_name || '-'}</td>
-                  <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{req.department || '-'}</td>
-                  <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{req.asset_name || '-'}</td>
+                  <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">{req.created_at ? format(new Date(req.created_at), 'dd/MM/yyyy') : '-'}</td>
+                  <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{(req.requester as any)?.full_name || '-'}</td>
+                  <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{req.location || '-'}</td>
+                  <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{(req.asset as any)?.name || '-'}</td>
                   <td className="px-4 py-3"><PriorityBadge priority={req.priority} /></td>
                   <td className="px-4 py-3"><RequestStatusBadge status={req.status} /></td>
                   <td className="px-4 py-3">
