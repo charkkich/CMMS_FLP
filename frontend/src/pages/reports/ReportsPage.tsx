@@ -2,8 +2,17 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabase';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
-import { format, parseISO, subMonths, startOfMonth } from 'date-fns';
+import { format, subMonths } from 'date-fns';
 import { th } from 'date-fns/locale';
+import { ArrowDownTrayIcon } from '@heroicons/react/24/outline';
+
+function downloadCsv(filename: string, rows: string[][]): void {
+  const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
 
 const COLORS = ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4'];
 
@@ -31,10 +40,6 @@ export default function ReportsPage() {
     requests.reduce((acc: any, r: any) => { acc[r.status] = (acc[r.status] || 0) + 1; return acc; }, {})
   ).map(([name, value]) => ({ name, value }));
 
-  const priorityData = Object.entries(
-    requests.reduce((acc: any, r: any) => { acc[r.priority] = (acc[r.priority] || 0) + 1; return acc; }, {})
-  ).map(([name, value]) => ({ name, value }));
-
   const monthlyData = Array.from({ length: 4 }, (_, i) => {
     const month = subMonths(new Date(), 3 - i);
     const monthStr = format(month, 'yyyy-MM');
@@ -46,11 +51,31 @@ export default function ReportsPage() {
   const totalLaborCost = workorders.reduce((s: number, w: any) => s + (w.labor_cost || 0), 0);
   const totalPartsCost = workorders.reduce((s: number, w: any) => s + (w.parts_cost || 0), 0);
   const completedWO = workorders.filter((w: any) => w.status === 'Completed').length;
-  const totalHours = workorders.reduce((s: number, w: any) => s + (w.actual_hours || 0), 0);
+  const exportRequests = () => {
+    const headers = ['Status', 'Priority', 'Date'];
+    const rows = requests.map((r: any) => [r.status, r.priority, r.created_at?.split('T')[0] || '']);
+    downloadCsv(`requests_${dateFrom}_${dateTo}.csv`, [headers, ...rows]);
+  };
+
+  const exportWorkOrders = () => {
+    const headers = ['Status', 'Type', 'Actual Hours', 'Labor Cost', 'Parts Cost', 'Date'];
+    const rows = workorders.map((w: any) => [w.status, w.type, w.actual_hours || 0, w.labor_cost || 0, w.parts_cost || 0, w.created_at?.split('T')[0] || '']);
+    downloadCsv(`workorders_${dateFrom}_${dateTo}.csv`, [headers, ...rows]);
+  };
 
   return (
     <div className="p-6 space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">รายงาน</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">รายงาน</h1>
+        <div className="flex gap-2">
+          <button onClick={exportRequests} className="flex items-center gap-2 px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
+            <ArrowDownTrayIcon className="h-4 w-4" /> Export คำขอ
+          </button>
+          <button onClick={exportWorkOrders} className="flex items-center gap-2 px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
+            <ArrowDownTrayIcon className="h-4 w-4" /> Export ใบสั่งงาน
+          </button>
+        </div>
+      </div>
       <div className="flex items-center gap-4 bg-white dark:bg-gray-800 rounded-xl shadow p-4">
         <label className="text-sm font-medium text-gray-700 dark:text-gray-300">ช่วงวันที่:</label>
         <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm" />

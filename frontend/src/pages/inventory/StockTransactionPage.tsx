@@ -32,10 +32,17 @@ export default function StockTransactionPage() {
       const part = parts.find((p: SparePart) => p.id === parseInt(values.part_id));
       if (!part) throw new Error('ไม่พบอะไหล่');
       const qty = parseInt(values.quantity);
-      const balance = values.transaction_type === 'Receive' ? part.current_stock + qty : part.current_stock - qty;
+      if (qty <= 0) throw new Error('จำนวนต้องมากกว่า 0');
+      const balance = values.transaction_type === 'Receive' || values.transaction_type === 'Return'
+        ? part.current_stock + qty
+        : part.current_stock - qty;
+      if (balance < 0) throw new Error(`สต็อกไม่เพียงพอ (คงเหลือ: ${part.current_stock} ${part.unit})`);
       const { error } = await supabase.from('stock_transactions').insert({ ...values, quantity: qty, balance_after: balance, performed_by: user?.id, transaction_date: new Date().toISOString() });
       if (error) throw error;
       await supabase.from('spare_parts').update({ current_stock: balance }).eq('id', values.part_id);
+      if (balance <= part.minimum_stock && part.minimum_stock > 0) {
+        toast.error(`⚠️ แจ้งเตือน: ${part.name} สต็อกต่ำกว่าขั้นต่ำ (${balance}/${part.minimum_stock})`, { duration: 5000 });
+      }
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['stock_transactions'] }); qc.invalidateQueries({ queryKey: ['spare_parts'] }); toast.success('บันทึกรายการสำเร็จ'); setShowModal(false); reset(); },
     onError: (e: any) => toast.error(e.message)

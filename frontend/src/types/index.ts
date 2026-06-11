@@ -57,7 +57,7 @@ export interface WorkOrder {
   description: string | null;
   type: 'Corrective' | 'Preventive';
   priority: 'Low' | 'Medium' | 'High' | 'Critical';
-  status: 'Open' | 'Assigned' | 'In Progress' | 'Completed' | 'Cancelled';
+  status: 'Open' | 'Assigned' | 'In Progress' | 'Waiting Spare Part' | 'Completed' | 'Closed' | 'Cancelled';
   asset_id: number | null;
   request_id: number | null;
   assigned_to: string | null;
@@ -97,6 +97,16 @@ export interface PmPlan {
   assignee?: { full_name: string } | null;
 }
 
+export interface PmRecord {
+  id: number;
+  plan_id: number;
+  performed_by: string;
+  performed_date: string;
+  notes: string | null;
+  checklist_results: Record<string, boolean>;
+  created_at: string;
+}
+
 export interface SparePart {
   id: number;
   part_code: string;
@@ -128,4 +138,15 @@ export interface StockTransaction {
   remark: string | null;
   transaction_date: string;
   part?: { name: string; part_code: string } | null;
+}
+
+export interface AuditLog {
+  id: number;
+  table_name: string;
+  record_id: string;
+  action: 'INSERT' | 'UPDATE' | 'DELETE';
+  old_values: Record<string, any> | null;
+  new_values: Record<string, any> | null;
+  performed_by: string;
+  performed_at: string;
 }

@@ -16,6 +16,7 @@ import RequestDetailPage from './pages/requests/RequestDetailPage';
 // Work Orders
 import WorkOrderListPage from './pages/workorders/WorkOrderListPage';
 import WorkOrderDetailPage from './pages/workorders/WorkOrderDetailPage';
+import WorkOrderFormPage from './pages/workorders/WorkOrderFormPage';
 
 // Assets
 import AssetListPage from './pages/assets/AssetListPage';
@@ -105,7 +106,9 @@ const AppRoutes: React.FC = () => {
 
       {/* Work Orders */}
       <Route path="/work-orders" element={<ProtectedRoute><WorkOrderListPage /></ProtectedRoute>} />
+      <Route path="/work-orders/new" element={<ProtectedRoute><WorkOrderFormPage /></ProtectedRoute>} />
       <Route path="/work-orders/:id" element={<ProtectedRoute><WorkOrderDetailPage /></ProtectedRoute>} />
+      <Route path="/work-orders/:id/edit" element={<ProtectedRoute><WorkOrderFormPage /></ProtectedRoute>} />
 
       {/* Assets */}
       <Route path="/assets" element={<ProtectedRoute><AssetListPage /></ProtectedRoute>} />

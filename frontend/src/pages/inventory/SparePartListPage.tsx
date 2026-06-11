@@ -27,7 +27,7 @@ export default function SparePartListPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">อะไหล่และสต็อก</h1>
         {canEdit && (
-          <Link to="/inventory/parts/new" className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+          <Link to="/spare-parts/new" className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
             <PlusIcon className="h-4 w-4" /> เพิ่มอะไหล่
           </Link>
         )}
@@ -70,8 +70,8 @@ export default function SparePartListPage() {
                         : <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">ปกติ</span>}
                     </td>
                     <td className="px-4 py-3">
-                      <Link to={`/inventory/transactions?part_id=${part.id}`} className="text-xs text-blue-600 hover:underline">ประวัติ</Link>
-                      {canEdit && <Link to={`/inventory/parts/${part.id}/edit`} className="ml-3 text-xs text-gray-500 hover:underline">แก้ไข</Link>}
+                      <Link to={`/stock-transactions?part_id=${part.id}`} className="text-xs text-blue-600 hover:underline">ประวัติ</Link>
+                      {canEdit && <Link to={`/spare-parts/${part.id}/edit`} className="ml-3 text-xs text-gray-500 hover:underline">แก้ไข</Link>}
                     </td>
                   </tr>
                 );
