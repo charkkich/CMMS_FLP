@@ -2,7 +2,7 @@ export interface Profile {
   id: string;
   full_name: string;
   username: string | null;
-  role: 'admin' | 'supervisor' | 'technician' | 'requester';
+  role: 'admin' | 'supervisor' | 'technician' | 'store_keeper' | 'requester';
   department: string | null;
   phone: string | null;
   avatar_url: string | null;
@@ -61,6 +61,7 @@ export interface WorkOrder {
   asset_id: number | null;
   request_id: number | null;
   assigned_to: string | null;
+  created_by: string | null;
   scheduled_start: string | null;
   scheduled_end: string | null;
   actual_start: string | null;
@@ -70,12 +71,16 @@ export interface WorkOrder {
   labor_cost: number | null;
   parts_cost: number | null;
   notes: string | null;
+  root_cause: string | null;
+  corrective_action: string | null;
   completion_notes: string | null;
-  created_by: string | null;
+  before_photo_url: string | null;
+  after_photo_url: string | null;
   created_at: string;
   updated_at: string;
   asset?: { name: string; asset_code: string } | null;
   assignee?: { full_name: string } | null;
+  creator?: { full_name: string } | null;
 }
 
 export interface PmPlan {
@@ -126,6 +131,24 @@ export interface SparePart {
   updated_at: string;
 }
 
+export interface SparePartRequest {
+  id: number;
+  wo_id: number;
+  part_id: number;
+  quantity_requested: number;
+  quantity_issued: number | null;
+  status: 'Pending' | 'Approved' | 'Rejected' | 'Issued';
+  requested_by: string;
+  approved_by: string | null;
+  rejection_reason: string | null;
+  remark: string | null;
+  created_at: string;
+  updated_at: string;
+  part?: { name: string; part_code: string; current_stock: number; unit: string } | null;
+  requester?: { full_name: string } | null;
+  approver?: { full_name: string } | null;
+}
+
 export interface StockTransaction {
   id: number;
   part_id: number;
@@ -134,6 +157,7 @@ export interface StockTransaction {
   balance_after: number;
   reference_number: string | null;
   wo_id: number | null;
+  spare_part_request_id: number | null;
   performed_by: string | null;
   remark: string | null;
   transaction_date: string;

@@ -14,7 +14,9 @@ import {
   UsersIcon,
   ChevronDownIcon,
   XMarkIcon,
+  ShoppingCartIcon,
 } from '@heroicons/react/24/outline';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -32,6 +34,8 @@ interface NavItem {
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const { t } = useTranslation();
   const location = useLocation();
+  const { user } = useAuth();
+  const role = user?.role ?? 'requester';
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
     maintenance: true,
     assets: false,
@@ -44,7 +48,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     setOpenGroups((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const navItems: NavItem[] = [
+  const allNavItems: NavItem[] = [
     { key: 'dashboard', label: t('nav.dashboard'), icon: HomeIcon, href: '/' },
     {
       key: 'maintenance',
@@ -79,6 +83,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       children: [
         { key: 'spareParts', label: t('nav.spareParts'), icon: ArchiveBoxIcon, href: '/spare-parts' },
         { key: 'stockTransactions', label: t('nav.stockTransactions'), icon: DocumentTextIcon, href: '/stock-transactions' },
+        { key: 'sparePartApprovals', label: 'อนุมัติใบเบิก', icon: ShoppingCartIcon, href: '/spare-part-approvals' },
       ],
     },
     { key: 'reports', label: t('nav.reports'), icon: ChartBarIcon, href: '/reports' },
@@ -92,6 +97,33 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       ],
     },
   ];
+
+  // Keys allowed per role (group key or child key)
+  const roleAllowedKeys: Record<string, string[]> = {
+    requester: ['dashboard', 'maintenance', 'requests'],
+    technician: ['dashboard', 'workOrders', 'assets', 'assetList', 'pm', 'pmSchedule', 'pmCalendar'],
+    store_keeper: ['dashboard', 'inventory', 'spareParts', 'stockTransactions', 'sparePartApprovals'],
+    supervisor: ['dashboard', 'maintenance', 'requests', 'workOrders', 'assets', 'assetList', 'pm', 'pmSchedule', 'pmCalendar', 'inventory', 'spareParts', 'stockTransactions', 'sparePartApprovals', 'reports'],
+    admin: [], // empty means all
+  };
+
+  const filterNavItems = (items: NavItem[]): NavItem[] => {
+    if (role === 'admin') return items;
+    const allowed = roleAllowedKeys[role] ?? [];
+    return items.reduce<NavItem[]>((acc, item) => {
+      if (!allowed.includes(item.key)) return acc;
+      if (item.children) {
+        const filteredChildren = item.children.filter(c => allowed.includes(c.key));
+        if (filteredChildren.length === 0) return acc;
+        acc.push({ ...item, children: filteredChildren });
+      } else {
+        acc.push(item);
+      }
+      return acc;
+    }, []);
+  };
+
+  const navItems = filterNavItems(allNavItems);
 
   const isActive = (href: string) => {
     if (href === '/') return location.pathname === '/';

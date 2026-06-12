@@ -35,6 +35,9 @@ import StockTransactionPage from './pages/inventory/StockTransactionPage';
 // Reports
 import ReportsPage from './pages/reports/ReportsPage';
 
+// Inventory (extended)
+import SparePartApprovalPage from './pages/inventory/SparePartApprovalPage';
+
 // Settings
 import UserManagementPage from './pages/settings/UserManagementPage';
 import LanguageSettingsPage from './pages/settings/LanguageSettingsPage';
@@ -128,6 +131,9 @@ const AppRoutes: React.FC = () => {
 
       {/* Reports */}
       <Route path="/reports" element={<ProtectedRoute><ReportsPage /></ProtectedRoute>} />
+
+      {/* Spare Part Approvals (Store Keeper) */}
+      <Route path="/spare-part-approvals" element={<ProtectedRoute><SparePartApprovalPage /></ProtectedRoute>} />
 
       {/* Settings */}
       <Route

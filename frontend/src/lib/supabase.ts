@@ -7,6 +7,7 @@ const ADMIN_ID = 'a0000000-0000-0000-0000-000000000001';
 const SUP_ID   = 'a0000000-0000-0000-0000-000000000002';
 const TECH_ID  = 'a0000000-0000-0000-0000-000000000003';
 const REQ_ID   = 'a0000000-0000-0000-0000-000000000004';
+const STORE_ID  = 'a0000000-0000-0000-0000-000000000005';
 
 const iso = (daysAgo = 0) => new Date(Date.now() - daysAgo * 86_400_000).toISOString();
 const dateStr = (daysFromNow = 0) => {
@@ -743,12 +744,14 @@ const db: DB = {
     { id: SUP_ID,   full_name: 'John Supervisor',  username: 'supervisor', role: 'supervisor', department: 'Maintenance',phone: null, avatar_url: null, is_active: true, created_at: iso(90), updated_at: iso() },
     { id: TECH_ID,  full_name: 'Mike Technician',  username: 'tech1',      role: 'technician', department: 'Maintenance',phone: null, avatar_url: null, is_active: true, created_at: iso(90), updated_at: iso() },
     { id: REQ_ID,   full_name: 'Sara Requester',   username: 'sara',       role: 'requester',  department: 'Operations', phone: null, avatar_url: null, is_active: true, created_at: iso(90), updated_at: iso() },
+    { id: STORE_ID, full_name: 'Korn StoreKeeper', username: 'storekeeper', role: 'store_keeper', department: 'Warehouse', phone: null, avatar_url: null, is_active: true, created_at: iso(90), updated_at: iso() },
   ],
   assets: testAssets,
   maintenance_requests: [...mt2026Data],
   work_orders: testWorkOrders,
   pm_plans: [...pm2026Data, ...testPMPlans],
   spare_parts: [...inventoryData],
+  spare_part_requests: [] as any[],
   stock_transactions: testStockTransactions,
   pm_records: [],
   work_order_parts: [],
@@ -763,6 +766,7 @@ const USERS: Record<string, { id: string; password: string }> = {
   'supervisor@cmms.local': { id: SUP_ID,   password: 'Admin@1234' },
   'tech@cmms.local':       { id: TECH_ID,  password: 'Admin@1234' },
   'requester@cmms.local':  { id: REQ_ID,   password: 'Admin@1234' },
+  'storekeeper@cmms.local': { id: STORE_ID, password: 'Admin@1234' },
 };
 
 const SESSION_KEY = 'cmms_mock_session';
