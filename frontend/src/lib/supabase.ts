@@ -866,6 +866,44 @@ class MockQueryBuilder {
     return Promise.resolve(this._run()).then(resolve, reject);
   }
 
+  // Parse "alias:table!fk(col1,col2)" or "alias:table(col1,col2)" tokens from select string
+  private _parseRelations(cols: string) {
+    const rels: Array<{ alias: string; table: string; fk: string | null; fields: string[] }> = [];
+    for (const part of cols.split(',').map(s => s.trim())) {
+      const m = part.match(/^(\w+):(\w+)(?:!(\w+))?\(([^)]+)\)$/);
+      if (m) {
+        const [, alias, table, fk, fieldStr] = m;
+        rels.push({ alias, table, fk: fk || null, fields: fieldStr.split(',').map(f => f.trim()) });
+      }
+    }
+    return rels;
+  }
+
+  // Resolve foreign-key joins on a set of rows
+  private _applyJoins(rows: AnyRow[]): AnyRow[] {
+    const rels = this._parseRelations(this._cols);
+    if (rels.length === 0) return rows;
+    return rows.map(row => {
+      const enriched = { ...row };
+      for (const rel of rels) {
+        // FK heuristic: explicit !fk → alias_id → table_singular_id
+        const singular = rel.table.replace(/s$/, '');
+        const fk = rel.fk ?? row[`${rel.alias}_id`] !== undefined ? `${rel.alias}_id`
+                        : row[`${singular}_id`] !== undefined ? `${singular}_id`
+                        : `${rel.alias}_id`;
+        const fkVal = row[fk as string];
+        if (fkVal == null) { enriched[rel.alias] = null; continue; }
+        const relRows = db[rel.table] ?? [];
+        const relRow = relRows.find((r: any) => String(r.id) === String(fkVal));
+        if (!relRow) { enriched[rel.alias] = null; continue; }
+        const picked: AnyRow = {};
+        for (const f of rel.fields) picked[f] = relRow[f];
+        enriched[rel.alias] = picked;
+      }
+      return enriched;
+    });
+  }
+
   private _run() {
     const rows = db[this.table] ?? [];
 
@@ -877,7 +915,9 @@ class MockQueryBuilder {
       }));
       if (!db[this.table]) db[this.table] = [];
       db[this.table].push(...inserted);
-      return { data: inserted.length === 1 ? inserted[0] : inserted, error: null };
+      // Apply joins so the returned record has relation objects (e.g. part:{name,part_code})
+      const enriched = this._applyJoins(inserted);
+      return { data: enriched.length === 1 ? enriched[0] : enriched, error: null };
     }
 
     let filtered = rows.filter(r => this._filters.every(f => f(r)));
@@ -904,6 +944,9 @@ class MockQueryBuilder {
     }
 
     if (this._limitN !== null) filtered = filtered.slice(0, this._limitN);
+
+    // Apply foreign-key joins (part:spare_parts(...), assignee:profiles(...), etc.)
+    filtered = this._applyJoins(filtered);
 
     if (this._single) {
       return filtered.length ? { data: filtered[0], error: null } : { data: null, error: { message: 'No rows found', code: 'PGRST116' } };
