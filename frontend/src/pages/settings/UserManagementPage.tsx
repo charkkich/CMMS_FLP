@@ -6,11 +6,12 @@ import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import { PlusIcon, UserIcon } from '@heroicons/react/24/outline';
 
-const ROLE_LABELS: Record<string, string> = { admin: 'ผู้ดูแลระบบ', supervisor: 'หัวหน้างาน', technician: 'ช่างเทคนิค', requester: 'ผู้แจ้งซ่อม' };
+const ROLE_LABELS: Record<string, string> = { admin: 'ผู้ดูแลระบบ', supervisor: 'หัวหน้างาน', technician: 'ช่างเทคนิค', store_keeper: 'คลังพัสดุ', requester: 'ผู้แจ้งซ่อม' };
 const ROLE_COLORS: Record<string, string> = {
   admin: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
   supervisor: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
   technician: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+  store_keeper: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
   requester: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
 };
 
@@ -49,7 +50,7 @@ export default function UserManagementPage() {
           <PlusIcon className="h-4 w-4" /> เพิ่มผู้ใช้
         </button>
       </div>
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-5 gap-4">
         {Object.entries(ROLE_LABELS).map(([role, label]) => (
           <div key={role} className="bg-white dark:bg-gray-800 rounded-xl shadow p-4 text-center">
             <p className="text-sm text-gray-500 dark:text-gray-400">{label}</p>

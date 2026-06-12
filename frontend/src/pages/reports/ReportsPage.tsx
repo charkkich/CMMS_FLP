@@ -161,7 +161,7 @@ export default function ReportsPage() {
   const { data: assets = [] } = useQuery({
     queryKey: ['filter_assets'],
     queryFn: async () => {
-      const { data } = await supabase.from('assets').select('id, asset_name').order('asset_name');
+      const { data } = await supabase.from('assets').select('id, name').order('name');
       return (data as any[]) || [];
     },
     staleTime: 5 * 60 * 1000,
@@ -523,7 +523,7 @@ export default function ReportsPage() {
             >
               <option value="">ทั้งหมด</option>
               {assets.map((a: any) => (
-                <option key={a.id} value={a.id}>{a.asset_name}</option>
+                <option key={a.id} value={a.id}>{a.name}</option>
               ))}
             </select>
           </div>

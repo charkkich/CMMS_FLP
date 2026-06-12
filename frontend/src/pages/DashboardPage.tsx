@@ -279,7 +279,7 @@ const TechnicianDashboard: React.FC = () => {
     queryFn: async () => {
       const { data: wos, error } = await supabase
         .from('work_orders')
-        .select('id, wo_number, title, status, priority, scheduled_end, created_at, asset_id, assets(name)')
+        .select('id, wo_number, title, status, priority, scheduled_end, created_at, asset_id, asset:assets(name,asset_code)')
         .eq('assigned_to', user!.id)
         .order('created_at', { ascending: false });
       if (error) throw error;
@@ -335,7 +335,7 @@ const TechnicianDashboard: React.FC = () => {
                     <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${PRIORITY_CLS[wo.priority] || ''}`}>{wo.priority}</span>
                   </div>
                   <p className="font-medium text-gray-900 dark:text-white text-sm truncate">{wo.title}</p>
-                  {wo.assets?.name && <p className="text-xs text-gray-500 mt-0.5">เครื่องจักร: {wo.assets.name}</p>}
+                  {wo.asset?.name && <p className="text-xs text-gray-500 mt-0.5">เครื่องจักร: {wo.asset.name}</p>}
                   {wo.scheduled_end && (
                     <p className={`text-xs mt-0.5 ${isBefore(parseISO(wo.scheduled_end), today) ? 'text-red-500 font-semibold' : 'text-gray-400'}`}>
                       กำหนดเสร็จ: {format(parseISO(wo.scheduled_end), 'd MMM yyyy', { locale: th })}
@@ -368,8 +368,8 @@ const StoreKeeperDashboard: React.FC = () => {
     queryFn: async () => {
       const [spReqsRes, partsRes, txRes] = await Promise.all([
         supabase.from('spare_part_requests').select('id, part_name, quantity_requested, status, created_at, work_order_id').eq('status', 'Pending').order('created_at', { ascending: false }),
-        supabase.from('spare_parts').select('id, name, part_number, current_stock, minimum_stock, unit').order('current_stock', { ascending: true }),
-        supabase.from('stock_transactions').select('id, type, quantity, created_at, spare_parts(name), notes').order('created_at', { ascending: false }).limit(10),
+        supabase.from('spare_parts').select('id, name, part_code, current_stock, minimum_stock, unit').order('current_stock', { ascending: true }),
+        supabase.from('stock_transactions').select('id, transaction_type, quantity, created_at, part:spare_parts(name,part_code), remark').order('created_at', { ascending: false }).limit(10),
       ]);
 
       const spReqs = (spReqsRes.data as any[]) || [];
@@ -438,7 +438,7 @@ const StoreKeeperDashboard: React.FC = () => {
                 <div key={p.id} className="flex items-center justify-between p-3 rounded-lg border border-gray-100 dark:border-gray-700">
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{p.name}</p>
-                    <p className="text-xs text-gray-500">{p.part_number} | ต่ำสุด: {p.minimum_stock} {p.unit}</p>
+                    <p className="text-xs text-gray-500">{p.part_code} | ต่ำสุด: {p.minimum_stock} {p.unit}</p>
                   </div>
                   <div className="ml-2 text-right">
                     <span className={`text-lg font-bold ${p.current_stock === 0 ? 'text-red-500' : 'text-orange-500'}`}>{p.current_stock}</span>
@@ -468,14 +468,14 @@ const StoreKeeperDashboard: React.FC = () => {
                 {(data?.transactions || []).map((t: any) => (
                   <tr key={t.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30">
                     <td className="py-2 px-3 text-xs text-gray-500">{t.created_at ? format(parseISO(t.created_at), 'd MMM yy', { locale: th }) : '-'}</td>
-                    <td className="py-2 px-3 text-gray-900 dark:text-white font-medium truncate max-w-[140px]">{t.spare_parts?.name || '-'}</td>
+                    <td className="py-2 px-3 text-gray-900 dark:text-white font-medium truncate max-w-[140px]">{t.part?.name || '-'}</td>
                     <td className="py-2 px-3">
-                      <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${t.type === 'IN' || t.type === 'Receive' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
-                        {t.type}
+                      <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${t.transaction_type === 'IN' || t.transaction_type === 'Receive' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
+                        {t.transaction_type}
                       </span>
                     </td>
                     <td className="py-2 px-3 font-mono text-sm font-semibold text-gray-900 dark:text-white">{t.quantity}</td>
-                    <td className="py-2 px-3 text-xs text-gray-500 truncate max-w-[120px]">{t.notes || '-'}</td>
+                    <td className="py-2 px-3 text-xs text-gray-500 truncate max-w-[120px]">{t.remark || '-'}</td>
                   </tr>
                 ))}
                 {!data?.transactions?.length && (

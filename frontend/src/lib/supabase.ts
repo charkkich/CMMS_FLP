@@ -753,7 +753,13 @@ const db: DB = {
   work_orders: testWorkOrders,
   pm_plans: [...pm2026Data, ...testPMPlans],
   spare_parts: [...inventoryData],
-  spare_part_requests: [] as any[],
+  spare_part_requests: [
+    { id: 1, wo_id: 5, part_id: 1, quantity_requested: 2, quantity_issued: null, status: 'Pending', requested_by: 'a0000000-0000-0000-0000-000000000003', approved_by: null, rejection_reason: null, remark: 'ลูกปืนพัดลม EVAP ชำรุด', created_at: iso(2), updated_at: iso(2) },
+    { id: 2, wo_id: 8, part_id: 3, quantity_requested: 1, quantity_issued: null, status: 'Pending', requested_by: 'a0000000-0000-0000-0000-000000000003', approved_by: null, rejection_reason: null, remark: 'สายพานขาด ต้องเปลี่ยนด่วน', created_at: iso(1), updated_at: iso(1) },
+    { id: 3, wo_id: 12, part_id: 5, quantity_requested: 1, quantity_issued: 1, status: 'Issued', requested_by: 'a0000000-0000-0000-0000-000000000006', approved_by: 'a0000000-0000-0000-0000-000000000005', rejection_reason: null, remark: 'น้ำมันไฮดรอลิค', created_at: iso(5), updated_at: iso(3) },
+    { id: 4, wo_id: 15, part_id: 7, quantity_requested: 3, quantity_issued: null, status: 'Rejected', requested_by: 'a0000000-0000-0000-0000-000000000003', approved_by: 'a0000000-0000-0000-0000-000000000005', rejection_reason: 'สต็อกไม่เพียงพอ รอสั่งซื้อ', remark: 'รีเลย์ควบคุม', created_at: iso(4), updated_at: iso(3) },
+    { id: 5, wo_id: 20, part_id: 2, quantity_requested: 1, quantity_issued: null, status: 'Pending', requested_by: 'a0000000-0000-0000-0000-000000000006', approved_by: null, rejection_reason: null, remark: 'ซีลเพลา ปั๊มน้ำ', created_at: iso(0), updated_at: iso(0) },
+  ] as any[],
   stock_transactions: testStockTransactions,
   pm_records: [],
   work_order_parts: [],
@@ -872,12 +878,34 @@ class MockQueryBuilder {
     for (const part of cols.split(',').map(s => s.trim())) {
       const m = part.match(/^(\w+):(\w+)(?:!(\w+))?\(([^)]+)\)$/);
       if (m) {
-        const [, alias, table, fk, fieldStr] = m;
-        rels.push({ alias, table, fk: fk || null, fields: fieldStr.split(',').map(f => f.trim()) });
+        const [, alias, table, rawFk, fieldStr] = m;
+        let fk: string | null = rawFk || null;
+        // If fk looks like a constraint name (ends with _fkey), extract the actual column name
+        if (fk && fk.endsWith('_fkey')) {
+          const withoutSuffix = fk.replace(/_fkey$/, '');
+          const parts = withoutSuffix.split('_');
+          // Try last two words joined (e.g. requested_by, assigned_to)
+          const candidate2 = parts.slice(-2).join('_');
+          if (candidate2.endsWith('_id') || candidate2.endsWith('_by') || candidate2.endsWith('_to')) {
+            fk = candidate2;
+          } else {
+            fk = parts[parts.length - 1];
+          }
+        }
+        rels.push({ alias, table, fk, fields: fieldStr.split(',').map(f => f.trim()) });
       }
     }
     return rels;
   }
+
+  // Known FK overrides: alias → actual column name in current table
+  private static FK_OVERRIDES: Record<string, string> = {
+    assignee: 'assigned_to',
+    creator: 'created_by',
+    created_by_user: 'created_by',
+    performer: 'performed_by',
+    approver: 'approved_by',
+  };
 
   // Resolve foreign-key joins on a set of rows
   private _applyJoins(rows: AnyRow[]): AnyRow[] {
@@ -886,12 +914,19 @@ class MockQueryBuilder {
     return rows.map(row => {
       const enriched = { ...row };
       for (const rel of rels) {
-        // FK heuristic: explicit !fk → alias_id → table_singular_id
-        const singular = rel.table.replace(/s$/, '');
-        const fk = rel.fk ?? row[`${rel.alias}_id`] !== undefined ? `${rel.alias}_id`
-                        : row[`${singular}_id`] !== undefined ? `${singular}_id`
-                        : `${rel.alias}_id`;
-        const fkVal = row[fk as string];
+        // Determine FK column: explicit !fk > known alias override > alias_id > singular_id
+        let fk: string;
+        if (rel.fk) {
+          fk = rel.fk;
+        } else if (MockQueryBuilder.FK_OVERRIDES[rel.alias]) {
+          fk = MockQueryBuilder.FK_OVERRIDES[rel.alias];
+        } else if (row[`${rel.alias}_id`] !== undefined) {
+          fk = `${rel.alias}_id`;
+        } else {
+          const singular = rel.table.replace(/s$/, '');
+          fk = row[`${singular}_id`] !== undefined ? `${singular}_id` : `${rel.alias}_id`;
+        }
+        const fkVal = row[fk];
         if (fkVal == null) { enriched[rel.alias] = null; continue; }
         const relRows = db[rel.table] ?? [];
         const relRow = relRows.find((r: any) => String(r.id) === String(fkVal));

@@ -221,6 +221,7 @@ export default function StockTransactionPage() {
             </div>
 
             <form onSubmit={handleSubmit((v) => mutation.mutate(v))} className="p-6 space-y-4">
+              <input type="hidden" {...register('transaction_type')} />
 
               {/* Part selector */}
               <div>

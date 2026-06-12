@@ -82,9 +82,9 @@ const RequestDetailPage: React.FC = () => {
     enabled: !!id,
   });
 
-  // Fetch linked work order (if any)
+  // Fetch linked work order (if any) — re-keyed on req.status so it refetches after approval
   const { data: linkedWO } = useQuery({
-    queryKey: ['request-wo', id],
+    queryKey: ['request-wo', id, req?.status],
     queryFn: async () => {
       const { data } = await supabase
         .from('work_orders')
@@ -100,43 +100,54 @@ const RequestDetailPage: React.FC = () => {
 
   // ── Approve + auto-create Work Order ──────────────────────────────────────
   const approve = async () => {
-    if (!req) return;
+    if (!req || saving) return;
     setSaving(true);
     try {
-      const woNumber = `WO-${format(new Date(), 'yyyyMM')}-${String(Date.now()).slice(-4)}`;
+      // Check if WO already exists for this request
+      const { data: existingWO } = await supabase
+        .from('work_orders')
+        .select('id, wo_number')
+        .eq('request_id', Number(id!))
+        .single();
 
-      const { error: woError } = await supabase.from('work_orders').insert({
-        wo_number: woNumber,
-        title: req.title,
-        description: req.description,
-        type: 'Corrective',
-        priority: req.priority,
-        status: 'Open',
-        asset_id: req.asset_id,
-        request_id: req.id,
-        created_by: user?.id,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      });
+      if (!existingWO) {
+        // Auto-create Work Order
+        const now = new Date();
+        const mm = String(now.getMonth() + 1).padStart(2, '0');
+        const yyyy = now.getFullYear();
+        const seq = String(Math.floor(Math.random() * 9000) + 1000);
+        const woNumber = `WO-${yyyy}${mm}-${seq}`;
+        const { error: woError } = await supabase.from('work_orders').insert({
+          wo_number: woNumber,
+          title: req.title,
+          description: req.description || null,
+          type: 'Corrective',
+          priority: req.priority,
+          status: 'Open',
+          asset_id: req.asset_id || null,
+          request_id: Number(id!),
+          created_by: user?.id,
+          root_cause: null,
+          corrective_action: null,
+          notes: null,
+          completion_notes: null,
+        });
+        if (woError) throw woError;
+      }
 
-      if (woError) { toast.error(`สร้างใบสั่งงานไม่สำเร็จ: ${woError.message}`); setSaving(false); return; }
-
-      const { error: reqError } = await supabase
+      const { error } = await supabase
         .from('maintenance_requests')
-        .update({ status: 'Approved', approved_by: user?.id })
+        .update({ status: 'Approved', approved_by: user?.id, updated_at: new Date().toISOString() })
         .eq('id', id!);
+      if (error) throw error;
 
-      if (reqError) { toast.error(reqError.message); setSaving(false); return; }
-
-      toast.success(`อนุมัติแล้ว — สร้างใบสั่งงาน ${woNumber} เรียบร้อย`);
+      toast.success('อนุมัติแล้ว — สร้างใบสั่งงานอัตโนมัติ');
       qc.invalidateQueries({ queryKey: ['request', id] });
-      qc.invalidateQueries({ queryKey: ['request-wo', id] });
-      qc.invalidateQueries({ queryKey: ['dashboard-supervisor'] });
+      qc.invalidateQueries({ queryKey: ['work_orders'] });
+      qc.invalidateQueries({ queryKey: ['requests'] });
     } catch (err: any) {
       toast.error(err.message || 'เกิดข้อผิดพลาด');
-    } finally {
-      setSaving(false);
-    }
+    } finally { setSaving(false); }
   };
 
   // ── Reject ────────────────────────────────────────────────────────────────

@@ -208,7 +208,7 @@ export default function WorkOrderDetailPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('spare_part_requests')
-        .select('*, part:spare_parts(name,part_code,current_stock,unit), requester:profiles!spare_part_requests_requested_by_fkey(full_name)')
+        .select('*, part:spare_parts(name,part_code,current_stock,unit), requester:profiles!requested_by(full_name)')
         .eq('wo_id', id!)
         .order('created_at', { ascending: false });
       if (error) throw error;
