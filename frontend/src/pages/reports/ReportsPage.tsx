@@ -40,17 +40,26 @@ export default function ReportsPage() {
     requests.reduce((acc: any, r: any) => { acc[r.status] = (acc[r.status] || 0) + 1; return acc; }, {})
   ).map(([name, value]) => ({ name, value }));
 
-  const monthlyData = Array.from({ length: 4 }, (_, i) => {
-    const month = subMonths(new Date(), 3 - i);
+  // Build monthly buckets from the selected date range (up to 6 months)
+  const monthsInRange = (() => {
+    const from = new Date(dateFrom); const to = new Date(dateTo);
+    const months: Date[] = [];
+    let cur = new Date(from.getFullYear(), from.getMonth(), 1);
+    while (cur <= to && months.length < 6) { months.push(new Date(cur)); cur.setMonth(cur.getMonth() + 1); }
+    return months;
+  })();
+
+  const monthlyData = monthsInRange.map(month => {
     const monthStr = format(month, 'yyyy-MM');
-    const mr = requests.filter((r: any) => r.created_at.startsWith(monthStr)).length;
-    const wo = workorders.filter((w: any) => w.created_at.startsWith(monthStr)).length;
-    return { month: format(month, 'MMM', { locale: th }), mr, wo };
+    const mr = requests.filter((r: any) => r.created_at?.startsWith(monthStr)).length;
+    const wo = workorders.filter((w: any) => w.created_at?.startsWith(monthStr)).length;
+    return { month: format(month, 'MMM yy', { locale: th }), mr, wo };
   });
 
   const totalLaborCost = workorders.reduce((s: number, w: any) => s + (w.labor_cost || 0), 0);
   const totalPartsCost = workorders.reduce((s: number, w: any) => s + (w.parts_cost || 0), 0);
-  const completedWO = workorders.filter((w: any) => w.status === 'Completed').length;
+  // Count both Completed and Closed as "done" work orders
+  const completedWO = workorders.filter((w: any) => ['Completed', 'Closed'].includes(w.status)).length;
   const exportRequests = () => {
     const headers = ['Status', 'Priority', 'Date'];
     const rows = requests.map((r: any) => [r.status, r.priority, r.created_at?.split('T')[0] || '']);
@@ -85,7 +94,7 @@ export default function ReportsPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: 'คำขอทั้งหมด', value: requests.length, color: 'blue' },
-          { label: 'ใบสั่งงานเสร็จสิ้น', value: completedWO, color: 'green' },
+          { label: 'ใบสั่งงานเสร็จ/ปิด', value: completedWO, color: 'green' },
           { label: 'ค่าแรงรวม', value: `฿${totalLaborCost.toLocaleString()}`, color: 'purple' },
           { label: 'ค่าอะไหล่รวม', value: `฿${totalPartsCost.toLocaleString()}`, color: 'orange' },
         ].map(card => (

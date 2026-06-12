@@ -80,7 +80,14 @@ export default function StockTransactionPage() {
                 <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{format(parseISO(t.transaction_date), 'dd/MM/yyyy HH:mm')}</td>
                 <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">{(t.part as any)?.name || '-'}</td>
                 <td className="px-4 py-3"><span className={`px-2 py-1 text-xs rounded-full ${typeColor(t.transaction_type)}`}>{t.transaction_type}</span></td>
-                <td className="px-4 py-3 text-sm font-semibold text-gray-900 dark:text-white">{t.quantity}</td>
+                <td className={`px-4 py-3 text-sm font-semibold ${
+                  t.transaction_type === 'Issue' ? 'text-red-600 dark:text-red-400' :
+                  t.transaction_type === 'Receive' || t.transaction_type === 'Return' ? 'text-green-600 dark:text-green-400' :
+                  'text-yellow-600 dark:text-yellow-400'
+                }`}>
+                  {t.transaction_type === 'Issue' ? '-' : t.transaction_type === 'Receive' || t.transaction_type === 'Return' ? '+' : '±'}
+                  {Math.abs(t.quantity)}
+                </td>
                 <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{t.balance_after}</td>
                 <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{t.reference_number || '-'}</td>
                 <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{t.remark || '-'}</td>

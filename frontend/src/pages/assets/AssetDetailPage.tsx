@@ -16,6 +16,7 @@ const AssetDetailPage: React.FC = () => {
   const [tab, setTab] = useState('Info');
   const { data: asset, isLoading } = useQuery({ queryKey:['asset',id], queryFn: async () => { const { data } = await supabase.from('assets').select('*').eq('id',id!).single(); return data; }, enabled:!!id });
   const { data: wos = [] } = useQuery({ queryKey:['asset-wo',id], queryFn: async () => { const { data } = await supabase.from('work_orders').select('*').eq('asset_id',id!).order('created_at',{ascending:false}); return data||[]; }, enabled:!!id&&tab==='Work Orders' });
+  const { data: pmPlans = [] } = useQuery({ queryKey:['asset-pm',id], queryFn: async () => { const { data } = await supabase.from('pm_plans').select('*').eq('asset_id',id!).order('next_due_date'); return data||[]; }, enabled:!!id&&tab==='PM Plans' });
   if (isLoading) return <div className="flex justify-center py-20"><div className="animate-spin h-8 w-8 border-4 border-primary-500 border-t-transparent rounded-full" /></div>;
   if (!asset) return <div className="text-center py-20 text-gray-500">Not found</div>;
   const canEdit = user?.role==='admin'||user?.role==='supervisor';
@@ -28,7 +29,7 @@ const AssetDetailPage: React.FC = () => {
         {canEdit && <Link to={`/assets/${id}/edit`} className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"><PencilSquareIcon className="h-4 w-4" />Edit</Link>}
       </div>
       <div className="border-b border-gray-200 dark:border-gray-700">
-        <nav className="flex gap-6">{['Info','Work Orders'].map(t => (
+        <nav className="flex gap-6">{['Info','Work Orders','PM Plans'].map(t => (
           <button key={t} onClick={() => setTab(t)} className={`pb-3 text-sm font-medium border-b-2 transition-colors ${tab===t?'border-primary-600 text-primary-600':'border-transparent text-gray-500 hover:text-gray-700'}`}>{t}</button>
         ))}</nav>
       </div>

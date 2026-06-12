@@ -14,34 +14,49 @@ const DashboardPage: React.FC = () => {
     queryKey: ['dashboard'],
     queryFn: async () => {
       const [mr, wo, pm, sp] = await Promise.all([
-        supabase.from('maintenance_requests').select('status, created_at'),
+        supabase.from('maintenance_requests').select('id, request_number, title, status, priority, created_at'),
         supabase.from('work_orders').select('status, type, created_at, actual_hours, actual_end'),
         supabase.from('pm_plans').select('next_due_date, is_active'),
         supabase.from('spare_parts').select('current_stock, minimum_stock'),
       ]);
-      const requests = mr.data || []; const workOrders = wo.data || [];
-      const pmPlans = pm.data || [];  const parts = sp.data || [];
+      const requests = (mr.data as any[]) || []; const workOrders = (wo.data as any[]) || [];
+      const pmPlans = (pm.data as any[]) || [];  const parts = (sp.data as any[]) || [];
       const today = new Date();
 
-      const openRequests = requests.filter((r: any) => ['Submitted','Approved'].includes(r.status)).length;
-      const activeWOs = workOrders.filter((w: any) => !['Completed','Cancelled'].includes(w.status)).length;
-      const overdue = pmPlans.filter((p: any) => p.is_active && new Date(p.next_due_date) < today).length;
-      const lowStock = parts.filter((p: any) => p.current_stock <= p.minimum_stock).length;
+      // KPI: open/submitted requests awaiting action
+      const openRequests = requests.filter((r: any) => ['Submitted', 'Approved'].includes(r.status)).length;
 
-      const woByStatus = Object.entries(workOrders.reduce((a: any, w: any) => { a[w.status] = (a[w.status]||0)+1; return a; }, {}))
-        .map(([name, value]) => ({ name, value }));
+      // KPI: work orders not yet closed/completed/cancelled
+      const activeWOs = workOrders.filter((w: any) =>
+        !['Completed', 'Closed', 'Cancelled'].includes(w.status)
+      ).length;
 
+      // KPI: PM plans past their next_due_date (only active plans with a valid date)
+      const overdue = pmPlans.filter((p: any) =>
+        p.is_active && p.next_due_date && new Date(p.next_due_date) < today
+      ).length;
+
+      // KPI: parts at or below minimum (only track items that have a minimum set > 0)
+      const lowStock = parts.filter((p: any) =>
+        p.minimum_stock > 0 && p.current_stock <= p.minimum_stock
+      ).length;
+
+      const woByStatus = Object.entries(
+        workOrders.reduce((a: any, w: any) => { a[w.status] = (a[w.status] || 0) + 1; return a; }, {})
+      ).map(([name, value]) => ({ name, value }));
+
+      // Monthly breakdown: corrective WOs vs preventive WOs (both from work_orders, consistent)
       const monthly = Array.from({ length: 6 }, (_, i) => {
         const d = subMonths(new Date(), 5 - i);
         const m = format(d, 'yyyy-MM');
         return {
           month: format(d, 'MMM'),
-          corrective: requests.filter((r: any) => r.created_at?.startsWith(m)).length,
+          corrective: workOrders.filter((w: any) => w.type === 'Corrective' && w.created_at?.startsWith(m)).length,
           preventive: workOrders.filter((w: any) => w.type === 'Preventive' && w.created_at?.startsWith(m)).length,
         };
       });
 
-      return { openRequests, activeWOs, overdue, lowStock, woByStatus, monthly, requests: mr.data || [], workOrders: wo.data || [] };
+      return { openRequests, activeWOs, overdue, lowStock, woByStatus, monthly, requests, workOrders };
     },
     staleTime: 60_000,
   });
@@ -96,17 +111,30 @@ const DashboardPage: React.FC = () => {
               ))}
             </tr></thead>
             <tbody className="divide-y divide-gray-50 dark:divide-gray-700/50">
-              {(data?.requests||[]).slice(0,5).map((r: any) => (
+              {(data?.requests || []).slice(0, 5).map((r: any) => (
                 <tr key={r.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30">
-                  <td className="py-2 px-3 font-mono text-xs text-gray-500">{r.request_number||`#${r.id}`}</td>
-                  <td className="py-2 px-3 font-medium text-gray-900 dark:text-white">{r.title}</td>
-                  <td className="py-2 px-3"><span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
-                    r.priority==='Critical'||r.priority==='High'?'bg-red-100 text-red-700':r.priority==='Medium'?'bg-amber-100 text-amber-700':'bg-gray-100 text-gray-600'
-                  }`}>{r.priority}</span></td>
-                  <td className="py-2 px-3"><span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
-                    r.status==='Completed'?'bg-green-100 text-green-700':r.status==='In Progress'?'bg-purple-100 text-purple-700':r.status==='Rejected'?'bg-red-100 text-red-700':'bg-blue-100 text-blue-700'
-                  }`}>{r.status}</span></td>
-                  <td className="py-2 px-3 text-gray-500 text-xs">{format(new Date(r.created_at),'dd MMM yyyy')}</td>
+                  <td className="py-2 px-3 font-mono text-xs text-gray-500">{r.request_number || `#${r.id}`}</td>
+                  <td className="py-2 px-3 font-medium text-gray-900 dark:text-white max-w-xs truncate">{r.title || '-'}</td>
+                  <td className="py-2 px-3">
+                    <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
+                      r.priority === 'Critical' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
+                      r.priority === 'High' ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' :
+                      r.priority === 'Medium' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
+                      'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
+                    }`}>{r.priority || '-'}</span>
+                  </td>
+                  <td className="py-2 px-3">
+                    <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
+                      r.status === 'Completed' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
+                      r.status === 'In Progress' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' :
+                      r.status === 'Rejected' ? 'bg-red-100 text-red-700' :
+                      r.status === 'Approved' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' :
+                      'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                    }`}>{r.status}</span>
+                  </td>
+                  <td className="py-2 px-3 text-gray-500 text-xs">
+                    {r.created_at ? format(new Date(r.created_at), 'dd MMM yyyy') : '-'}
+                  </td>
                 </tr>
               ))}
             </tbody>

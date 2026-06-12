@@ -17,7 +17,7 @@ export default function SparePartListPage() {
     }
   });
 
-  const lowStock = parts.filter((p: SparePart) => p.current_stock <= p.minimum_stock);
+  const lowStock = parts.filter((p: SparePart) => p.minimum_stock > 0 && p.current_stock <= p.minimum_stock);
   const filtered = parts.filter((p: SparePart) => p.name.toLowerCase().includes(search.toLowerCase()) || p.part_code.toLowerCase().includes(search.toLowerCase()));
 
   const canEdit = user?.role === 'admin' || user?.role === 'supervisor';
@@ -55,7 +55,7 @@ export default function SparePartListPage() {
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
               {filtered.map((part: SparePart) => {
-                const isLow = part.current_stock <= part.minimum_stock;
+                const isLow = part.minimum_stock > 0 && part.current_stock <= part.minimum_stock;
                 return (
                   <tr key={part.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                     <td className="px-4 py-3 text-sm font-mono text-gray-600 dark:text-gray-400">{part.part_code}</td>
