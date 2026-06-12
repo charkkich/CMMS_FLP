@@ -7,7 +7,8 @@ const ADMIN_ID = 'a0000000-0000-0000-0000-000000000001';
 const SUP_ID   = 'a0000000-0000-0000-0000-000000000002';
 const TECH_ID  = 'a0000000-0000-0000-0000-000000000003';
 const REQ_ID   = 'a0000000-0000-0000-0000-000000000004';
-const STORE_ID  = 'a0000000-0000-0000-0000-000000000005';
+const STORE_ID = 'a0000000-0000-0000-0000-000000000005';
+const TECH2_ID = 'a0000000-0000-0000-0000-000000000006';
 
 const iso = (daysAgo = 0) => new Date(Date.now() - daysAgo * 86_400_000).toISOString();
 const dateStr = (daysFromNow = 0) => {
@@ -745,6 +746,7 @@ const db: DB = {
     { id: TECH_ID,  full_name: 'Mike Technician',  username: 'tech1',      role: 'technician', department: 'Maintenance',phone: null, avatar_url: null, is_active: true, created_at: iso(90), updated_at: iso() },
     { id: REQ_ID,   full_name: 'Sara Requester',   username: 'sara',       role: 'requester',  department: 'Operations', phone: null, avatar_url: null, is_active: true, created_at: iso(90), updated_at: iso() },
     { id: STORE_ID, full_name: 'Korn StoreKeeper', username: 'storekeeper', role: 'store_keeper', department: 'Warehouse', phone: null, avatar_url: null, is_active: true, created_at: iso(90), updated_at: iso() },
+    { id: TECH2_ID, full_name: 'Somsak Technician 2', username: 'tech2', role: 'technician', department: 'Maintenance', phone: null, avatar_url: null, is_active: true, created_at: iso(90), updated_at: iso() },
   ],
   assets: testAssets,
   maintenance_requests: [...mt2026Data],
@@ -765,6 +767,7 @@ const USERS: Record<string, { id: string; password: string }> = {
   'admin@cmms.local':      { id: ADMIN_ID, password: 'Admin@1234' },
   'supervisor@cmms.local': { id: SUP_ID,   password: 'Admin@1234' },
   'tech@cmms.local':       { id: TECH_ID,  password: 'Admin@1234' },
+  'tech2@cmms.local':      { id: TECH2_ID, password: 'Admin@1234' },
   'requester@cmms.local':  { id: REQ_ID,   password: 'Admin@1234' },
   'storekeeper@cmms.local': { id: STORE_ID, password: 'Admin@1234' },
 };

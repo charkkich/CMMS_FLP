@@ -82,7 +82,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       icon: ArchiveBoxIcon,
       children: [
         { key: 'spareParts', label: t('nav.spareParts'), icon: ArchiveBoxIcon, href: '/spare-parts' },
-        { key: 'stockTransactions', label: t('nav.stockTransactions'), icon: DocumentTextIcon, href: '/stock-transactions' },
+        { key: 'stockTransactions', label: role === 'technician' ? '🔧 เบิกอะไหล่' : t('nav.stockTransactions'), icon: DocumentTextIcon, href: '/stock-transactions' },
         { key: 'sparePartApprovals', label: 'อนุมัติใบเบิก', icon: ShoppingCartIcon, href: '/spare-part-approvals' },
       ],
     },
@@ -101,7 +101,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   // Keys allowed per role (group key or child key)
   const roleAllowedKeys: Record<string, string[]> = {
     requester: ['dashboard', 'maintenance', 'requests'],
-    technician: ['dashboard', 'workOrders', 'assets', 'assetList', 'pm', 'pmSchedule', 'pmCalendar'],
+    technician: ['dashboard', 'workOrders', 'assets', 'assetList', 'pm', 'pmSchedule', 'pmCalendar', 'inventory', 'stockTransactions'],
     store_keeper: ['dashboard', 'inventory', 'spareParts', 'stockTransactions', 'sparePartApprovals'],
     supervisor: ['dashboard', 'maintenance', 'requests', 'workOrders', 'assets', 'assetList', 'pm', 'pmSchedule', 'pmCalendar', 'inventory', 'spareParts', 'stockTransactions', 'sparePartApprovals', 'reports'],
     admin: [], // empty means all
