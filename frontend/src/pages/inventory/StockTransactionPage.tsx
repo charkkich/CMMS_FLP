@@ -80,6 +80,8 @@ export default function StockTransactionPage() {
       qc.invalidateQueries({ queryKey: ['stock_transactions'] });
       qc.invalidateQueries({ queryKey: ['spare_parts'] });
       qc.invalidateQueries({ queryKey: ['spare_parts_select'] });
+      qc.invalidateQueries({ queryKey: ['dashboard-storekeeper'] });
+      qc.invalidateQueries({ queryKey: ['dashboard-supervisor'] });
       toast.success('บันทึกรายการสำเร็จ');
       setShowModal(false);
       reset({ transaction_type: isTechnician ? 'Issue' : 'Receive' });

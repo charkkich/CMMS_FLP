@@ -147,6 +147,9 @@ const SparePartApprovalPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['spare_parts'] });
       queryClient.invalidateQueries({ queryKey: ['stock_transactions'] });
       queryClient.invalidateQueries({ queryKey: ['work-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['work_orders'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-storekeeper'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-supervisor'] });
     },
     onError: (err: Error) => {
       toast.error(err.message || 'เกิดข้อผิดพลาด');
@@ -178,6 +181,8 @@ const SparePartApprovalPage: React.FC = () => {
       setRejectionReason('');
       queryClient.invalidateQueries({ queryKey: ['spare-part-requests'] });
       queryClient.invalidateQueries({ queryKey: ['work-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['work_orders'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-storekeeper'] });
     },
     onError: (err: Error) => {
       toast.error(err.message || 'เกิดข้อผิดพลาด');

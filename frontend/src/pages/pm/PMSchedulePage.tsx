@@ -155,6 +155,8 @@ export default function PMSchedulePage() {
     },
     onSuccess: (nextDue) => {
       qc.invalidateQueries({ queryKey: ['pm_plans'] });
+      qc.invalidateQueries({ queryKey: ['dashboard-supervisor'] });
+      qc.invalidateQueries({ queryKey: ['dashboard-technician'] });
       toast.success(`บันทึก PM เสร็จสิ้น — กำหนดครั้งต่อไป: ${nextDue}`);
       setCompletingPlan(null);
       setPmNotes('');

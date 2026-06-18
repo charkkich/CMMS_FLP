@@ -242,6 +242,8 @@ export default function WorkOrderDetailPage() {
     qc.invalidateQueries({ queryKey: ['work_order', id] });
     qc.invalidateQueries({ queryKey: ['work_orders'] });
     qc.invalidateQueries({ queryKey: ['spare_part_requests', id] });
+    qc.invalidateQueries({ queryKey: ['dashboard-supervisor'] });
+    qc.invalidateQueries({ queryKey: ['dashboard-technician'] });
   };
 
   // Accept work order (technician)
